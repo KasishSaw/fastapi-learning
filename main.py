@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import Optional
 
 app=FastAPI()
 
@@ -13,8 +16,6 @@ def get_user(user_id: int):
 @app.get("/items")
 def get_items(skip: int = 0, limit: int = 10):
     return {"skip": skip, "limit": limit}
-
-from typing import Optional
 
 @app.get("/products")
 def get_products(category: Optional[str] = None):
@@ -37,3 +38,16 @@ def get_product_id(product_id:int, discount: float=0.0):
 @app.get("/orders")
 def orders(status:Optional[str]=None, limit: int = 10):
     return {"status":status, "limit":limit}
+
+from pydantic import BaseModel
+
+class Item(BaseModel):
+    name: str
+    price: float
+    in_stock: bool=True
+    description: Optional[str] = None
+
+
+@app.post("/items")
+def create_item(item: Item):
+    return item
