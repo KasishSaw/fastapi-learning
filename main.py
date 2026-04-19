@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -27,6 +27,24 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
+
+class StudentCreate(BaseModel):
+    name: str = Field(min_length=2)
+    age: int = Field(ge=18, le=30)
+    email: str
+    password: str = Field(min_length=8)
+
+class StudentResponse(BaseModel):
+    name: str
+    age: int
+    email: str
+
+class Book(BaseModel):
+    title: str = Field(min_length=2, max_length=100)
+    author: str = Field(min_length=2)
+    price: float = Field(gt=0)
+    in_stock: bool = True
+    description: Optional[str] = None
 
 # ─── Root ─────────────────────────────────────────────────
 @app.get("/")
@@ -67,72 +85,67 @@ def orders(status: Optional[str] = None, limit: int = 10):
 def get_users():
     return fake_users_db
 
-@app.get("/users/{user_id}")
-def get_user(user_id: int):
-    if user_id not in fake_users_db:
-        return {"error": "User not found"}
-    return fake_users_db[user_id]
-
-@app.get("/users/{user_id}/orders")
-def get_user_orders(user_id: int, limit: int = 5, status: Optional[str] = None):
-    return {"user_id": user_id, "limit": limit, "status": status}
-
-@app.post("/users")
+@app.post("/users", status_code=status.HTTP_201_CREATED)
 def create_user(user: UserCreate):
     user_id = len(fake_users_db) + 1
     fake_users_db[user_id] = user
     return {"id": user_id, **user.model_dump()}
 
+@app.get("/users/{user_id}")
+def get_user(user_id: int):
+    if user_id not in fake_users_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return fake_users_db[user_id]
+
 @app.put("/users/{user_id}")
 def update_user(user_id: int, user: UserCreate):
     if user_id not in fake_users_db:
-        return {"error": "User not found"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
     fake_users_db[user_id] = user
     return {"id": user_id, **user.model_dump()}
 
 @app.patch("/users/{user_id}")
 def partial_update_user(user_id: int, user: UserUpdate):
     if user_id not in fake_users_db:
-        return {"error": "User not found"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
     stored_user = fake_users_db[user_id].model_dump()
     update_data = user.model_dump(exclude_unset=True)
     stored_user.update(update_data)
     fake_users_db[user_id] = UserCreate(**stored_user)
     return {"id": user_id, **stored_user}
 
-@app.delete("/users/{user_id}")
+@app.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(user_id: int):
     if user_id not in fake_users_db:
-        return {"error": "User not found"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
     del fake_users_db[user_id]
-    return {"message": f"User {user_id} deleted"}
 
+@app.get("/users/{user_id}/orders")
+def get_user_orders(user_id: int, limit: int = 5, status: Optional[str] = None):
+    return {"user_id": user_id, "limit": limit, "status": status}
+
+# ─── Books ────────────────────────────────────────────────
 @app.get("/books/{book_id}")
-def books(book_id:int, include_reviews: Optional[bool]=False):
-    return {"book_id":book_id, "include_reviews":include_reviews}
-
-class Book(BaseModel):
-    title: str = Field(min_length=2, max_length=100)
-    author:str=Field(min_length=2)
-    price:float=Field(gt=0)
-    in_stock:bool=Field(default=True)
-    description:Optional[str]=Field(default=None)
+def books(book_id: int, include_reviews: bool = False):
+    return {"book_id": book_id, "include_reviews": include_reviews}
 
 @app.post("/books")
-def books_details(book:Book):
+def books_details(book: Book):
     return book
 
-class StudentCreate(BaseModel):
-    name:str=Field(min_length=2)
-    age:int=Field(ge=18, le=30)
-    email:str
-    password:str=Field(min_length=8)
-
-class StudentResponse(BaseModel):
-    name:str
-    age:int
-    email:str
-
-@app.post("/students")
-def StudentDetails(student:StudentCreate):
+# ─── Students ─────────────────────────────────────────────
+@app.post("/students", response_model=StudentResponse)
+def StudentDetails(student: StudentCreate):
     return student
