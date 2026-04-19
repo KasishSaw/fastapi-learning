@@ -64,3 +64,15 @@ class UserResponse(BaseModel):
 @app.post("/users", response_model=UserResponse)
 def create_user(user: UserCreate):
     return user
+
+from pydantic import BaseModel, Field
+ 
+class Product(BaseModel):
+    name: str = Field(min_length=2, max_length=50, description="Product name")
+    price: float = Field(gt=0, description="Price must be greater than 0")
+    stock: int = Field(ge=0, description="Stock cannot be negative")
+    description: Optional[str] = Field(None, max_length=200, description="Product description")
+
+@app.post("/products")
+def create_product(product: Product):
+    return product
