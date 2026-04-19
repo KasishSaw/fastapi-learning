@@ -77,6 +77,17 @@ class Cart(BaseModel):
     items: list[OrderItem]
     coupon: Optional[str] = None
 
+class Company(BaseModel):
+    name:str = Field(min_length=2)
+    email:str
+    phone:str
+    address:Address
+class Employee(BaseModel):
+    name:str = Field(min_length=2)
+    age:int = Field(ge=18, le=60)
+    salary:float = Field(gt=0)
+    company:Company
+
 # ─── Root ─────────────────────────────────────────────────
 @app.get("/", tags=["Root"])
 def read_root():
@@ -205,3 +216,7 @@ def create_cart(cart: Cart):
         "coupon": cart.coupon,
         "total": total
     }
+
+@app.post("/employees", tags=["Employees"])
+def employeeDeets(employee:Employee):
+    return employee
