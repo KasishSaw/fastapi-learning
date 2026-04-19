@@ -2,7 +2,11 @@ from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import Optional
 
-app = FastAPI()
+app = FastAPI(
+    title="FastAPI Learning Project",
+    description="Learning FastAPI from scratch with Kasish",
+    version="1.0.0"
+)
 
 # ─── Fake Database ───────────────────────────────────────
 fake_users_db = {}
@@ -47,51 +51,51 @@ class Book(BaseModel):
     description: Optional[str] = None
 
 # ─── Root ─────────────────────────────────────────────────
-@app.get("/")
+@app.get("/", tags=["Root"])
 def read_root():
     return {"message": "Hello, FastAPI!"}
 
 # ─── Items ────────────────────────────────────────────────
-@app.get("/items")
+@app.get("/items", tags=["Items"])
 def get_items(skip: int = 0, limit: int = 10):
     return {"skip": skip, "limit": limit}
 
-@app.post("/items")
+@app.post("/items", tags=["Items"])
 def create_item(item: Item):
     return item
 
 # ─── Products ─────────────────────────────────────────────
-@app.get("/products")
+@app.get("/products", tags=["Products"])
 def get_products(category: Optional[str] = None):
     if category:
         return {"category": category}
     return {"message": "showing all products"}
 
-@app.post("/products")
+@app.post("/products", tags=["Products"])
 def create_product(product: Product):
     return product
 
-@app.get("/products/{product_id}")
+@app.get("/products/{product_id}", tags=["Products"])
 def get_product_id(product_id: int, discount: float = 0.0):
     return {"product_id": product_id, "discount": discount}
 
 # ─── Orders ───────────────────────────────────────────────
-@app.get("/orders")
+@app.get("/orders", tags=["Orders"])
 def orders(status: Optional[str] = None, limit: int = 10):
     return {"status": status, "limit": limit}
 
 # ─── Users ────────────────────────────────────────────────
-@app.get("/users")
+@app.get("/users", tags=["Users"])
 def get_users():
     return fake_users_db
 
-@app.post("/users", status_code=status.HTTP_201_CREATED)
+@app.post("/users", status_code=status.HTTP_201_CREATED, tags=["Users"])
 def create_user(user: UserCreate):
     user_id = len(fake_users_db) + 1
     fake_users_db[user_id] = user
     return {"id": user_id, **user.model_dump()}
 
-@app.get("/users/{user_id}")
+@app.get("/users/{user_id}", tags=["Users"])
 def get_user(user_id: int):
     if user_id not in fake_users_db:
         raise HTTPException(
@@ -100,7 +104,7 @@ def get_user(user_id: int):
         )
     return fake_users_db[user_id]
 
-@app.put("/users/{user_id}")
+@app.put("/users/{user_id}", tags=["Users"])
 def update_user(user_id: int, user: UserCreate):
     if user_id not in fake_users_db:
         raise HTTPException(
@@ -110,7 +114,7 @@ def update_user(user_id: int, user: UserCreate):
     fake_users_db[user_id] = user
     return {"id": user_id, **user.model_dump()}
 
-@app.patch("/users/{user_id}")
+@app.patch("/users/{user_id}", tags=["Users"])
 def partial_update_user(user_id: int, user: UserUpdate):
     if user_id not in fake_users_db:
         raise HTTPException(
@@ -123,7 +127,7 @@ def partial_update_user(user_id: int, user: UserUpdate):
     fake_users_db[user_id] = UserCreate(**stored_user)
     return {"id": user_id, **stored_user}
 
-@app.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Users"])
 def delete_user(user_id: int):
     if user_id not in fake_users_db:
         raise HTTPException(
@@ -132,20 +136,20 @@ def delete_user(user_id: int):
         )
     del fake_users_db[user_id]
 
-@app.get("/users/{user_id}/orders")
+@app.get("/users/{user_id}/orders", tags=["Users"])
 def get_user_orders(user_id: int, limit: int = 5, status: Optional[str] = None):
     return {"user_id": user_id, "limit": limit, "status": status}
 
 # ─── Books ────────────────────────────────────────────────
-@app.get("/books/{book_id}")
+@app.get("/books/{book_id}", tags=["Books"])
 def books(book_id: int, include_reviews: bool = False):
     return {"book_id": book_id, "include_reviews": include_reviews}
 
-@app.post("/books")
+@app.post("/books", tags=["Books"])
 def books_details(book: Book):
     return book
 
 # ─── Students ─────────────────────────────────────────────
-@app.post("/students", response_model=StudentResponse)
+@app.post("/students", response_model=StudentResponse, tags=["Students"])
 def StudentDetails(student: StudentCreate):
     return student
