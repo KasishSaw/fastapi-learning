@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import Optional
+from enum import Enum
 
 app = FastAPI(
     title="FastAPI Learning Project",
@@ -49,6 +50,12 @@ class Book(BaseModel):
     price: float = Field(gt=0)
     in_stock: bool = True
     description: Optional[str] = None
+
+class OrderStatus(str, Enum):
+    pending = "pending"
+    shipped = "shipped"
+    delivered = "delivered"
+    cancelled = "cancelled"
 
 # ─── Root ─────────────────────────────────────────────────
 @app.get("/", tags=["Root"])
@@ -153,3 +160,14 @@ def books_details(book: Book):
 @app.post("/students", response_model=StudentResponse, tags=["Students"])
 def StudentDetails(student: StudentCreate):
     return student
+
+@app.get("/orders/status/{status}", tags=["Orders"])
+def get_orders_by_status(status: OrderStatus):
+    if status == OrderStatus.pending:
+        return {"status": status, "message": "Order is being processed"}
+    elif status == OrderStatus.shipped:
+        return {"status": status, "message": "Order is on the way!"}
+    elif status == OrderStatus.delivered:
+        return {"status": status, "message": "Order delivered!"}
+    else:
+        return {"status": status, "message": "Order was cancelled"}
