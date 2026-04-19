@@ -57,6 +57,26 @@ class OrderStatus(str, Enum):
     delivered = "delivered"
     cancelled = "cancelled"
 
+class Address(BaseModel):
+    city: str
+    country: str
+    pincode: str
+
+class Customer(BaseModel):
+    name: str = Field(min_length=2)
+    email: str
+    address: Address
+
+class OrderItem(BaseModel):
+    name: str
+    price: float = Field(gt=0)
+    quantity: int = Field(ge=1)
+
+class Cart(BaseModel):
+    user_id: int
+    items: list[OrderItem]
+    coupon: Optional[str] = None
+
 # ─── Root ─────────────────────────────────────────────────
 @app.get("/", tags=["Root"])
 def read_root():
@@ -171,3 +191,17 @@ def get_orders_by_status(status: OrderStatus):
         return {"status": status, "message": "Order delivered!"}
     else:
         return {"status": status, "message": "Order was cancelled"}
+    
+@app.post("/customers", tags=["Customers"])
+def create_customer(customer: Customer):
+    return customer
+
+@app.post("/cart", tags=["Cart"])
+def create_cart(cart: Cart):
+    total = sum(item.price * item.quantity for item in cart.items)
+    return {
+        "user_id": cart.user_id,
+        "items": cart.items,
+        "coupon": cart.coupon,
+        "total": total
+    }
