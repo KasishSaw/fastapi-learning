@@ -228,3 +228,18 @@ def employeeDeets(employee:Employee):
 async def slow_endpoint():
     await asyncio.sleep(2) 
     return {"message": "Done after 2 seconds"}
+
+@app.get("/ping", tags =["Root"])
+async def msg():
+    await asyncio.sleep(1)
+    return {"message": "pong", "delay": "1 second"}
+
+@app.get("/users/{user_id}/profile", tags = ["Users"])
+async def users(user_id:int):
+    if user_id not in fake_users_db:
+        raise HTTPException (
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = "user not found"
+        )
+    profile_views = 100
+    return {**fake_users_db[user_id].model_dump(), "profile_views": profile_views}
