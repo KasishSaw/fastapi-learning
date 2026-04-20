@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Depends 
 from pydantic import BaseModel, Field
 from typing import Optional
 from enum import Enum
@@ -243,3 +243,38 @@ async def users(user_id:int):
         )
     profile_views = 100
     return {**fake_users_db[user_id].model_dump(), "profile_views": profile_views}
+
+# ─── Dependencies ─────────────────────────────────────────
+def verify_token(token: str):
+    if token != "secret123":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    return token
+
+def get_pagination(skip: int = 0, limit: int = 10):
+    return {"skip": skip, "limit": limit}
+
+# ─── Protected Routes ─────────────────────────────────────
+@app.get("/protected/users", tags=["Protected"])
+async def get_protected_users(token: str = Depends(verify_token)):
+    return {"message": "you are authorized!", "users": fake_users_db}
+
+@app.get("/protected/products", tags=["Protected"])
+async def get_protected_products(token: str = Depends(verify_token)):
+    return {"message": "you are authorized!", "products": []}
+
+@app.get("/paginated/items", tags=["Paginated"])
+async def get_paginated_items(pagination: dict = Depends(get_pagination)):
+    return {"skip": pagination["skip"], "limit": pagination["limit"]}
+
+def verify_role(role:str):
+    if role!="admin":
+        raise HTTPException(
+            status_code=403, detail= "Admins only"
+        )
+    return role
+@app.get("/admin/dashboard", tags = ["Admin"])
+async def get_protected_admin(role:str=Depends(verify_role)):
+    return {"message": "Welcome to admin dashboard!"}
