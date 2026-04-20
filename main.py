@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import Optional
 from enum import Enum
+import asyncio
+
 
 app = FastAPI(
     title="FastAPI Learning Project",
@@ -220,3 +222,9 @@ def create_cart(cart: Cart):
 @app.post("/employees", tags=["Employees"])
 def employeeDeets(employee:Employee):
     return employee
+
+
+@app.get("/slow", tags=["Root"])
+async def slow_endpoint():
+    await asyncio.sleep(2) 
+    return {"message": "Done after 2 seconds"}
