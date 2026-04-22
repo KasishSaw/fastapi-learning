@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from routers import users, products
+from dependencies import verify_token, get_current_user, get_admin_user, get_pagination
+
 
 app = FastAPI(
     title="FastAPI Learning Project",
@@ -39,3 +41,11 @@ app.include_router(products.router)
 @app.get("/", tags=["Root"])
 async def read_root():
     return {"message": "Hello, FastAPI!"}
+
+@app.get("/me", tags=["Auth"])
+async def get_me(user: dict = Depends(get_current_user)):
+    return {"message": f"Hello {user['name']}!", "user": user}
+
+@app.get("/admin", tags=["Auth"])
+async def get_admin(user: dict = Depends(get_admin_user)):
+    return {"message": f"Welcome admin {user['name']}!"}
