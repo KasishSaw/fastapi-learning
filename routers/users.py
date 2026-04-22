@@ -4,7 +4,8 @@ from dependencies import verify_token
 
 router = APIRouter(
     prefix="/users",
-    tags=["Users"]
+    tags=["Users"],
+    dependencies=[Depends(verify_token)]
 )
 
 fake_users_db = {}

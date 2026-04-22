@@ -8,7 +8,8 @@ from dependencies import verify_token, get_current_user, get_admin_user, get_pag
 app = FastAPI(
     title="FastAPI Learning Project",
     description="Learning FastAPI from scratch with Kasish",
-    version="1.0.0"
+    version="1.0.0",
+    dependencies= [Depends(verify_token)]
 )
 
 # ─── Exception Handlers ───────────────────────────────────
