@@ -61,3 +61,13 @@ async def log_request(request:Request, call_next):
     response.headers["X-Process-Time"] = str(round(process_time, 4))
     print(f" Response: {response.status_code} | Time: {round(process_time, 4)}s")
     return response
+
+@app.middleware("http")
+async def api_version_middleware(request:Request, call_next):
+    api_version = request.headers.get("X-API-Version")
+    response = await call_next(request)
+    if api_version:
+        response.headers["X-API-Version"] = api_version
+    else:
+        response.headers["X-API-Version"] = "1.0"
+    return response
