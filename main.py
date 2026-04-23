@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from routers import users, products
 from dependencies import verify_token, get_current_user, get_admin_user, get_pagination
+import time
 
 
 app = FastAPI(
@@ -50,3 +51,13 @@ async def get_me(user: dict = Depends(get_current_user)):
 @app.get("/admin", tags=["Auth"])
 async def get_admin(user: dict = Depends(get_admin_user)):
     return {"message": f"Welcome admin {user['name']}!"}
+
+@app.middleware("http")
+async def log_request(request:Request, call_next):
+    start_time=time.time() 
+    print(f"\n Request: {request.method} {request.url}")
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(round(process_time, 4))
+    print(f" Response: {response.status_code} | Time: {round(process_time, 4)}s")
+    return response
